@@ -26,7 +26,6 @@ on:
 # Explizite Permissions für den Workflow
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   minify:
@@ -42,7 +41,6 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 1  # Shallow clone für schnelleren Checkout
-        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
@@ -56,24 +54,12 @@ jobs:
     - name: Minify HTML
       run: bun run build
 
-    - name: Configure Git
+    - name: Commit minified files
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-
-    - name: Commit and push changes
-      run: |
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          COMMIT_MSG="chore: manual minify - ${{ github.event.inputs.reason }} [skip ci]"
-        elif [[ "${{ github.ref }}" == "refs/heads/production" ]]; then
-          COMMIT_MSG="chore(production): minify HTML [skip ci]"
-        elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
-          COMMIT_MSG="chore(beta): minify HTML [skip ci]"
-        else
-          COMMIT_MSG="chore(develop): minify HTML [skip ci]"
-        fi
-        
         git add dist/
         if ! git diff --quiet --staged; then
-          git commit -m "${COMMIT_MSG}"
-          git push origin HEAD:${{ github.ref_name }} 
+          git commit -m "chore: update minified HTML [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
+        fi 
