@@ -5,11 +5,27 @@ on:
     branches: [ develop, beta, production ]
     paths:
       - 'index.html'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/**'
   pull_request:
     branches: [ develop, beta, production ]
     paths:
       - 'index.html'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/**'
+  # Ermöglicht manuelles Auslösen des Workflows
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'Manual build and test'
+
+# Explizite Permissions für den Workflow
+permissions:
+  contents: write
 
 jobs:
   minify:
@@ -21,9 +37,10 @@ jobs:
       cancel-in-progress: true
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 1  # Shallow clone für schnelleren Checkout
 
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
@@ -31,30 +48,18 @@ jobs:
         bun-version: latest
 
     - name: Install dependencies
-      run: bun install
+      run: |
+        bun install --frozen-lockfile --no-progress
 
     - name: Minify HTML
       run: bun run build
-
-    - name: Set commit message
-      run: |
-        if [[ "${{ github.ref }}" == "refs/heads/production" ]]; then
-          echo "COMMIT_MSG=chore(production): minify HTML [skip ci]" >> $GITHUB_ENV
-        elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
-          echo "COMMIT_MSG=chore(beta): minify HTML [skip ci]" >> $GITHUB_ENV
-        else
-          echo "COMMIT_MSG=chore(develop): minify HTML [skip ci]" >> $GITHUB_ENV
-        fi
 
     - name: Commit minified files
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add dist/
-        git diff --quiet && git diff --staged --quiet || git commit -m "${{ env.COMMIT_MSG }}"
-
-    - name: Push changes
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref }} 
+        if ! git diff --quiet --staged; then
+          git commit -m "chore: update minified HTML [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
+        fi 
