@@ -63,18 +63,17 @@ jobs:
 
     - name: Commit and push changes
       run: |
-        COMMIT_PREFIX="chore"
         if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          COMMIT_MSG="${COMMIT_PREFIX}: manual minify - ${{ github.event.inputs.reason }}"
+          COMMIT_MSG="chore: manual minify - ${{ github.event.inputs.reason }} [skip ci]"
         elif [[ "${{ github.ref }}" == "refs/heads/production" ]]; then
-          COMMIT_MSG="${COMMIT_PREFIX}(production): minify HTML"
+          COMMIT_MSG="chore(production): minify HTML [skip ci]"
         elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
-          COMMIT_MSG="${COMMIT_PREFIX}(beta): minify HTML"
+          COMMIT_MSG="chore(beta): minify HTML [skip ci]"
         else
-          COMMIT_MSG="${COMMIT_PREFIX}(develop): minify HTML"
+          COMMIT_MSG="chore(develop): minify HTML [skip ci]"
         fi
         
         git add dist/
         if ! git diff --quiet --staged; then
-          git commit -m "${COMMIT_MSG} [skip ci]"
+          git commit -m "${COMMIT_MSG}"
           git push origin HEAD:${{ github.ref_name }} 
