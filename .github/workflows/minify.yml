@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   minify:
-    runs-on: alpine-latest
+    runs-on: ubuntu-latest
     
     # Verhindert parallele Ausführung des Workflows
     concurrency:
