@@ -11,6 +11,11 @@ on:
       - 'index.html'
   workflow_dispatch:
 
+# Explizite Permissions für den Workflow
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   minify:
     runs-on: ubuntu-latest
