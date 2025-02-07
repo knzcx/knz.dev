@@ -5,11 +5,23 @@ on:
     branches: [ develop, beta, production ]
     paths:
       - 'index.html'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/**'
   pull_request:
     branches: [ develop, beta, production ]
     paths:
       - 'index.html'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/**'
+  # Ermöglicht manuelles Auslösen des Workflows
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'Manual build and test'
 
 # Explizite Permissions für den Workflow
 permissions:
@@ -29,6 +41,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
@@ -43,7 +56,9 @@ jobs:
 
     - name: Set commit message
       run: |
-        if [[ "${{ github.ref }}" == "refs/heads/production" ]]; then
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "COMMIT_MSG=chore: manual minify - ${{ github.event.inputs.reason }} [skip ci]" >> $GITHUB_ENV
+        elif [[ "${{ github.ref }}" == "refs/heads/production" ]]; then
           echo "COMMIT_MSG=chore(production): minify HTML [skip ci]" >> $GITHUB_ENV
         elif [[ "${{ github.ref }}" == "refs/heads/beta" ]]; then
           echo "COMMIT_MSG=chore(beta): minify HTML [skip ci]" >> $GITHUB_ENV
