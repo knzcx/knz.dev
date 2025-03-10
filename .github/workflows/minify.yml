@@ -2,20 +2,19 @@ name: Minify HTML
 
 on:
   push:
-    branches: [ develop, beta, production ]
+    branches: [ production ]
     paths:
       - 'index.html'
       - 'scripts/**'
       - 'package.json'
       - '.github/workflows/**'
   pull_request:
-    branches: [ develop, beta, production ]
+    branches: [ production ]
     paths:
       - 'index.html'
       - 'scripts/**'
       - 'package.json'
       - '.github/workflows/**'
-  # Ermöglicht manuelles Auslösen des Workflows
   workflow_dispatch:
     inputs:
       reason:
@@ -23,7 +22,6 @@ on:
         required: false
         default: 'Manual build and test'
 
-# Explizite Permissions für den Workflow
 permissions:
   contents: write
 
@@ -31,7 +29,6 @@ jobs:
   minify:
     runs-on: ubuntu-latest
     
-    # Verhindert parallele Ausführung des Workflows
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
@@ -40,7 +37,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 1  # Shallow clone für schnelleren Checkout
+        fetch-depth: 1
 
     - name: Setup Bun
       uses: oven-sh/setup-bun@v1
